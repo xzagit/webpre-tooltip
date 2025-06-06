@@ -1,0 +1,78 @@
+# Docker Compose 优化版本
+# 支持多种构建选项，加速开发流程
+
+version: '3.8'
+
+services:
+  # 生产版本 - 多阶段构建
+  webpre-tooltip:
+    build: 
+      context: .
+      dockerfile: Dockerfile.optimized
+      # 使用构建参数优化
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: webpre-tooltip:optimized
+    container_name: webpre-tooltip-optimized
+    ports:
+      - "10015:10015"
+    volumes:
+      - ./uploads:/app/uploads
+      # 开发时可以挂载代码实现热重载
+      # - ./app.py:/app/app.py:ro
+      # - ./static:/app/static:ro
+      # - ./templates:/app/templates:ro
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:10015/', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # 轻量级版本 - 快速构建
+  webpre-tooltip-light:
+    build: 
+      context: .
+      dockerfile: Dockerfile.light
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: webpre-tooltip:light
+    container_name: webpre-tooltip-light
+    ports:
+      - "10016:10015"
+    volumes:
+      - ./uploads:/app/uploads
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped
+    profiles:
+      - light
+
+  # 开发版本 - 代码挂载，支持热重载
+  webpre-tooltip-dev:
+    build: 
+      context: .
+      dockerfile: Dockerfile.light
+    image: webpre-tooltip:dev
+    container_name: webpre-tooltip-dev
+    ports:
+      - "10017:10015"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./app.py:/app/app.py:ro
+      - ./static:/app/static:ro
+      - ./templates:/app/templates:ro
+      - ./test:/app/test:ro
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    restart: unless-stopped
+    profiles:
+      - dev
+
+networks:
+  default:
+    name: webpre-tooltip-network

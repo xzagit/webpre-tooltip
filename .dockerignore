@@ -1,0 +1,99 @@
+# Docker 构建忽略文件
+# 减少构建上下文，加速构建
+
+# Git 相关
+.git
+.gitignore
+.gitattributes
+
+# Python 相关
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache
+.coverage
+htmlcov
+
+# 虚拟环境
+venv
+.venv
+env
+.env
+
+# IDE 文件
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 日志文件
+*.log
+logs
+
+# 临时文件
+*.tmp
+*.temp
+temp
+tmp
+
+# 文档和说明文件（构建时不需要的）
+README_UPDATE_SUMMARY.md
+DOCKER_OPTIMIZATION.md
+!README.md
+!PROJECT_INFO.txt
+!VERSION.txt
+!requirements.txt
+!requirements.optimized.txt
+
+# 测试文件（生产构建时不需要）
+test_build_performance.sh
+*_test.py
+test_tooltip_features.py
+
+# 上传的数据文件
+uploads/*
+!uploads/README.md
+
+# 数据文件
+*.csv
+*.json
+*.jsonl
+*.parquet
+*.xlsx
+*.xls
+
+# 备份文件
+*.backup
+*.bak
+*_backup
+*_old
+
+# Docker 相关
+Dockerfile*
+!Dockerfile
+!Dockerfile.optimized
+!Dockerfile.light
+docker-compose*.yml
+.dockerignore
+
+# 构建脚本
+build*.sh
+deploy*.sh
+start_*
+
+# 版本控制
+VERSION.txt
+
+# 开发配置
+.env.local
+.env.development
+config.local.py

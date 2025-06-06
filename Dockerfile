@@ -39,27 +39,23 @@ RUN apt-get update && apt-get install -y \
 RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/ && \
     pip config set global.trusted-host pypi.tuna.tsinghua.edu.cn
 
-# 复制requirements.txt并安装Python依赖
-COPY requirements.txt .
+# 复制应用程序文件（按变更频率排序，最常变的放最后）
+COPY PROJECT_INFO.txt VERSION.txt ./
+COPY requirements.txt ./
+
+# 安装Python依赖
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
-
-# 复制应用程序文件
-COPY app.py .
-COPY demo_tooltip.py .
-COPY test_tooltip_features.py .
-COPY PROJECT_INFO.txt .
-COPY README.md .
 
 # 复制静态文件和模板
 COPY static/ ./static/
 COPY templates/ ./templates/
 
-# 复制测试数据文件（如果存在）
-COPY test_long_columns.csv .
+# 复制测试数据文件
+COPY test/test_long_columns.csv ./test_long_columns.csv
 
-# 复制文档目录
-COPY docs/ ./docs/
+# 复制应用程序Python文件
+COPY app.py demo_tooltip.py ./
 
 # 创建uploads目录
 RUN mkdir -p uploads
@@ -79,7 +75,7 @@ EXPOSE 10015
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:10015/', timeout=5)" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:10015/', timeout=5)" || exit 1
 
 # 启动命令
 CMD ["python", "app.py"]
