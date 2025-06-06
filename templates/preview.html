@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}数据预览 - 数据查看器{% endblock %}
+
+{% block extra_css %}
+<style>
+.preview-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.json-preview {
+    background-color: #2d3748;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.json-preview .json-key {
+    color: #90cdf4;
+}
+
+.json-preview .json-string {
+    color: #68d391;
+}
+
+.json-preview .json-number {
+    color: #fbb6ce;
+}
+
+.json-preview .json-null {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.copy-btn {
+    position: relative;
+    float: right;
+    margin-bottom: 10px;
+}
+
+.field-info {
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.field-name {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 5px;
+}
+
+.field-value {
+    color: #4a5568;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    background-color: #f7fafc;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+}
+
+.field-type {
+    font-size: 0.8em;
+    color: #718096;
+    font-style: italic;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-eye me-2"></i>数据预览
+                </h2>
+                <div class="text-muted">
+                    <i class="fas fa-file-alt me-1"></i>{{ current_data.filename }}
+                </div>
+            </div>
+            
+            <!-- 文件信息卡片 -->
+            <div class="preview-container">
+                <h5><i class="fas fa-info-circle me-2"></i>文件信息</h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>文件名:</strong> {{ current_data.filename }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>总行数:</strong> {{ current_data.file_info.rows|format_number }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>总列数:</strong> {{ current_data.file_info.columns }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>文件大小:</strong> {{ current_data.file_info.size }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第一行数据JSON预览 -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-code me-2"></i>第一行数据 (JSON格式)
+                    </h5>
+                    <button class="btn btn-sm btn-outline-primary copy-btn" onclick="copyToClipboard()">
+                        <i class="fas fa-copy me-1"></i>复制JSON
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="json-preview" id="jsonContent">{{ json_string }}</div>
+                </div>
+            </div>
+            
+            <!-- 字段详情 -->
+            <div class="mt-4">
+                <h5><i class="fas fa-list me-2"></i>字段详情</h5>
+                <div class="row">
+                    {% for key, value in first_row_dict.items() %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="field-info">
+                            <div class="field-name" title="{{ key }}" data-bs-toggle="tooltip" data-bs-placement="top">{{ key }}</div>
+                            <div class="field-value" title="{{ value|string }}" data-bs-toggle="tooltip" data-bs-placement="top">
+                                {% if value is none %}
+                                    <span class="json-null">null</span>
+                                {% elif value is sameas true or value is sameas false %}
+                                    <span class="json-number">{{ value|lower }}</span>
+                                {% elif value is number %}
+                                    <span class="json-number">{{ value }}</span>
+                                {% else %}
+                                    <span class="json-string">"{{ value }}"</span>
+                                {% endif %}
+                            </div>
+                            <div class="field-type">
+                                类型: {{ value.__class__.__name__ if value is not none else 'NoneType' }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- 操作按钮 -->
+            <div class="mt-4 text-center">
+                <a href="{{ url_for('view_data') }}" class="btn btn-primary">
+                    <i class="fas fa-table me-1"></i>查看完整数据
+                </a>
+                <a href="{{ url_for('view_statistics') }}" class="btn btn-info">
+                    <i class="fas fa-chart-bar me-1"></i>数据统计
+                </a>
+                <a href="{{ url_for('view_visualization') }}" class="btn btn-success">
+                    <i class="fas fa-chart-line me-1"></i>数据可视化
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyToClipboard() {
+    const jsonContent = document.getElementById('jsonContent').textContent;
+    navigator.clipboard.writeText(jsonContent).then(function() {
+        // 显示复制成功提示
+        const btn = document.querySelector('.copy-btn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-1"></i>已复制';
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(function() {
+            btn.innerHTML = originalText;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-primary');
+        }, 2000);
+    }).catch(function(err) {
+        console.error('复制失败: ', err);
+        alert('复制失败，请手动选择文本复制');
+    });
+}
+
+// JSON语法高亮
+document.addEventListener('DOMContentLoaded', function() {
+    const jsonElement = document.getElementById('jsonContent');
+    let content = jsonElement.textContent;
+    
+    // 简单的JSON语法高亮
+    content = content.replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:');
+    content = content.replace(/: "([^"]*)"/g, ': <span class="json-string">"$1"</span>');
+    content = content.replace(/: (\d+\.?\d*)/g, ': <span class="json-number">$1</span>');
+    content = content.replace(/: (true|false)/g, ': <span class="json-number">$1</span>');
+    content = content.replace(/: null/g, ': <span class="json-null">null</span>');
+    
+    jsonElement.innerHTML = content;
+});
+</script>
+{% endblock %}

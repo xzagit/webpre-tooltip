@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tooltip功能演示</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .demo-container {
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+        .demo-title {
+            color: #007bff;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-4">
+        <h1 class="text-center mb-4">🎉 Tooltip功能演示页面</h1>
+        
+        <div class="alert alert-success">
+            <h5><i class="fas fa-check-circle me-2"></i>问题已解决！</h5>
+            <p class="mb-0">数据预览部分的属性名省略号问题已成功修复。现在当鼠标悬停在被截断的列名或数据上时，会显示完整的内容。</p>
+        </div>
+        
+        <div class="demo-container">
+            <div class="demo-title">1. 表头Tooltip演示</div>
+            <p>下面的表格有很长的列名，鼠标悬停在表头上会显示完整的列名：</p>
+            <table class="table table-striped data-table">
+                <thead>
+                    <tr>
+                        <th title="very_long_column_name_that_should_be_truncated" data-bs-toggle="tooltip" data-bs-placement="top">very_long_column_name...</th>
+                        <th title="another_extremely_long_column_name_for_testing_tooltip" data-bs-toggle="tooltip" data-bs-placement="top">another_extremely_long...</th>
+                        <th title="medium_length_column_name" data-bs-toggle="tooltip" data-bs-placement="top">medium_length_column_name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td title="This is a very long text value that should be truncated in the table" data-bs-toggle="tooltip" data-bs-placement="top">This is a very long text...</td>
+                        <td title="Another long value for testing" data-bs-toggle="tooltip" data-bs-placement="top">Another long value...</td>
+                        <td title="Medium text" data-bs-toggle="tooltip" data-bs-placement="top">Medium text</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="demo-container">
+            <div class="demo-title">2. 侧边栏列名Tooltip演示</div>
+            <p>侧边栏中的列名也支持tooltip：</p>
+            <div class="card" style="max-width: 300px;">
+                <div class="card-body">
+                    <h6>列信息</h6>
+                    <div class="d-flex align-items-center mb-2">
+                        <button class="btn btn-sm btn-outline-primary me-2" title="显示/隐藏列" data-bs-toggle="tooltip">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <small class="column-name" title="very_long_column_name_that_should_be_truncated" data-bs-toggle="tooltip">very_long_column...</small>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <button class="btn btn-sm btn-outline-primary me-2" title="显示/隐藏列" data-bs-toggle="tooltip">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <small class="column-name" title="another_extremely_long_column_name_for_testing_tooltip" data-bs-toggle="tooltip">another_extremely...</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-container">
+            <div class="demo-title">3. 修复的功能特性</div>
+            <ul class="list-group">
+                <li class="list-group-item d-flex align-items-center">
+                    <i class="fas fa-check text-success me-3"></i>
+                    <div>
+                        <strong>表头tooltip：</strong>
+                        鼠标悬停在表头上显示完整的列名，解决了长列名被省略号截断的问题
+                    </div>
+                </li>
+                <li class="list-group-item d-flex align-items-center">
+                    <i class="fas fa-check text-success me-3"></i>
+                    <div>
+                        <strong>数据单元格tooltip：</strong>
+                        鼠标悬停在数据单元格上显示完整的内容
+                    </div>
+                </li>
+                <li class="list-group-item d-flex align-items-center">
+                    <i class="fas fa-check text-success me-3"></i>
+                    <div>
+                        <strong>侧边栏列名tooltip：</strong>
+                        侧边栏中被截断的列名也支持tooltip显示
+                    </div>
+                </li>
+                <li class="list-group-item d-flex align-items-center">
+                    <i class="fas fa-check text-success me-3"></i>
+                    <div>
+                        <strong>主页预览tooltip：</strong>
+                        主页的数据预览表格也添加了相同的tooltip功能
+                    </div>
+                </li>
+                <li class="list-group-item d-flex align-items-center">
+                    <i class="fas fa-check text-success me-3"></i>
+                    <div>
+                        <strong>样式优化：</strong>
+                        添加了专门的CSS样式，使tooltip更加美观和实用
+                    </div>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="demo-container">
+            <div class="demo-title">4. 技术实现说明</div>
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>HTML模板修改：</h6>
+                    <ul>
+                        <li><code>data.html</code> - 数据表格页面</li>
+                        <li><code>index.html</code> - 主页预览部分</li>
+                        <li><code>preview.html</code> - 预览页面字段详情</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>JavaScript增强：</h6>
+                    <ul>
+                        <li>添加了 <code>initTooltips()</code> 函数</li>
+                        <li>自动检测需要tooltip的元素</li>
+                        <li>统一的tooltip初始化和管理</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <h6>CSS样式优化：</h6>
+                    <ul>
+                        <li>定制tooltip外观</li>
+                        <li>优化悬停效果</li>
+                        <li>提升用户体验</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Bootstrap集成：</h6>
+                    <ul>
+                        <li>使用Bootstrap 5的tooltip组件</li>
+                        <li>响应式设计</li>
+                        <li>跨浏览器兼容</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="/" class="btn btn-primary me-2">
+                <i class="fas fa-home me-1"></i>返回主页
+            </a>
+            <a href="/data" class="btn btn-success">
+                <i class="fas fa-table me-1"></i>查看数据表格
+            </a>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // 页面加载后初始化tooltip
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化所有tooltip
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl, {
+                    trigger: 'hover focus',
+                    delay: { show: 500, hide: 100 }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

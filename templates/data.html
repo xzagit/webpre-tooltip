@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}数据浏览 - 数据查看器{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- 侧边栏 - 筛选和搜索 -->
+    <div class="col-md-3">
+        <div class="sidebar">
+            <!-- 文件信息 -->
+            <h6><i class="fas fa-info-circle me-2"></i>文件信息</h6>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <small>
+                        <strong>文件:</strong> {{ current_data.filename }}<br>
+                        <strong>行数:</strong> {{ current_data.file_info.rows|format_number }}<br>
+                        <strong>列数:</strong> {{ current_data.file_info.columns }}
+                    </small>
+                </div>
+            </div>
+            
+            <!-- 列信息 -->
+            <h6><i class="fas fa-columns me-2"></i>列信息</h6>
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="column-controls-header d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">显示/隐藏列</small>
+                        <button id="toggleColumnsBtn" class="btn btn-sm btn-outline-primary" title="展开/折叠列列表">
+                            <i class="fas fa-chevron-down"></i>
+                            <span class="ms-1">展开</span>
+                        </button>
+                    </div>
+                    
+                    <div id="columnsList" class="columns-list collapsed">
+                        {% for col in data.columns %}
+                            <div class="column-item {% if loop.index > 5 %}column-item-hidden{% endif %}" data-column-index="{{ loop.index0 }}">
+                                <div class="d-flex align-items-center">
+                                    <button class="column-visibility-btn me-2" 
+                                            data-column="{{ col }}" 
+                                            data-column-index="{{ loop.index0 }}"
+                                            title="显示/隐藏列"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-placement="top">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <small class="column-name flex-grow-1" title="{{ col }}" data-bs-toggle="tooltip" data-bs-placement="top">{{ col|truncate(15) }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 搜索功能 -->
+            <h6><i class="fas fa-search me-2"></i>搜索数据</h6>
+            <form method="GET" action="{{ url_for('view_data') }}" class="mb-3">
+                <!-- 保持筛选参数 -->
+                {% if filter_column %}
+                    <input type="hidden" name="filter_column" value="{{ filter_column }}">
+                    <input type="hidden" name="filter_operator" value="{{ filter_operator }}">
+                    <input type="hidden" name="filter_value" value="{{ filter_value }}">
+                {% endif %}
+                
+                <div class="mb-2">
+                    <input type="text" class="form-control form-control-sm" name="search" 
+                           placeholder="输入搜索内容..." value="{{ search }}">
+                </div>
+                
+                <div class="mb-2">
+                    <select class="form-select form-select-sm" name="search_column">
+                        <option value="all" {% if search_column == 'all' %}selected{% endif %}>所有列</option>
+                        {% for col in data.columns %}
+                            <option value="{{ col }}" {% if search_column == col %}selected{% endif %}>{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="fas fa-search me-1"></i>搜索
+                </button>
+            </form>
+            
+            <!-- 筛选功能 -->
+            <h6><i class="fas fa-filter me-2"></i>数据筛选</h6>
+            <form method="GET" action="{{ url_for('view_data') }}" class="mb-3">
+                <!-- 保持搜索参数 -->
+                {% if search %}
+                    <input type="hidden" name="search" value="{{ search }}">
+                    <input type="hidden" name="search_column" value="{{ search_column }}">
+                {% endif %}
+                
+                <div class="mb-2">
+                    <label class="form-label">筛选列:</label>
+                    <select class="form-select form-select-sm" name="filter_column">
+                        <option value="">选择列...</option>
+                        {% for col in data.columns %}
+                            <option value="{{ col }}" {% if filter_column == col %}selected{% endif %}>{{ col }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="mb-2">
+                    <label class="form-label">操作符:</label>
+                    <select class="form-select form-select-sm" name="filter_operator">
+                        <option value="eq" {% if filter_operator == 'eq' %}selected{% endif %}>等于</option>
+                        <option value="ne" {% if filter_operator == 'ne' %}selected{% endif %}>不等于</option>
+                        <option value="gt" {% if filter_operator == 'gt' %}selected{% endif %}>大于</option>
+                        <option value="lt" {% if filter_operator == 'lt' %}selected{% endif %}>小于</option>
+                        <option value="gte" {% if filter_operator == 'gte' %}selected{% endif %}>大于等于</option>
+                        <option value="lte" {% if filter_operator == 'lte' %}selected{% endif %}>小于等于</option>
+                        <option value="contains" {% if filter_operator == 'contains' %}selected{% endif %}>包含</option>
+                    </select>
+                </div>
+                
+                <div class="mb-2">
+                    <label class="form-label">筛选值:</label>
+                    <input type="text" class="form-control form-control-sm" name="filter_value" 
+                           placeholder="输入筛选值..." value="{{ filter_value }}">
+                </div>
+                
+                <div class="row">
+                    <div class="col-6">
+                        <button type="submit" class="btn btn-success btn-sm w-100">
+                            <i class="fas fa-filter me-1"></i>应用
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('view_data') }}" class="btn btn-secondary btn-sm w-100">
+                            <i class="fas fa-undo me-1"></i>重置
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 主内容区 - 数据表格 -->
+    <div class="col-md-9">
+        <div class="main-content">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4>
+                    <i class="fas fa-table me-2"></i>数据浏览
+                    {% if search or filter_column %}
+                        <small class="text-muted">(已筛选)</small>
+                    {% endif %}
+                </h4>
+                
+                <div class="text-muted">
+                    显示 {{ data.total_rows|format_number }} 行数据
+                </div>
+            </div>
+            
+            <!-- 当前筛选条件显示 -->
+            {% if search or filter_column %}
+                <div class="alert alert-info">
+                    <strong>当前筛选条件:</strong>
+                    {% if search %}
+                        搜索: "{{ search }}" 
+                        {% if search_column != 'all' %}在列 "{{ search_column }}" 中{% endif %}
+                    {% endif %}
+                    {% if search and filter_column %} | {% endif %}
+                    {% if filter_column %}
+                        筛选: {{ filter_column }} {{ filter_operator }} "{{ filter_value }}"
+                    {% endif %}
+                </div>
+            {% endif %}
+            
+            <!-- 数据表格 -->
+            <div class="resizable-table-container">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 60px; resize: none;">#</th>
+                                {% for col in data.columns %}
+                                    <th style="min-width: 120px;" data-column="{{ col }}" data-column-index="{{ loop.index0 }}" title="{{ col }}" data-bs-toggle="tooltip" data-bs-placement="top">{{ col }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for row in data.data %}
+                            <tr class="clickable-row" data-row-index="{{ ((data.page - 1) * data.per_page + loop.index - 1) }}" 
+                                onclick="viewRowDetail({{ ((data.page - 1) * data.per_page + loop.index - 1) }})"
+                                title="点击查看第 {{ ((data.page - 1) * data.per_page + loop.index) }} 行详情">
+                                <td class="text-muted">{{ ((data.page - 1) * data.per_page + loop.index) }}</td>
+                                {% for cell in row %}
+                                    <td title="{{ cell|string }}" data-column-index="{{ loop.index0 }}" data-bs-toggle="tooltip" data-bs-placement="top">
+                                        {% if cell is none or cell == 'nan' %}
+                                            <span class="text-muted">NULL</span>
+                                        {% else %}
+                                            {{ cell|string|truncate(100) }}
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 分页导航 -->
+            {% if data.total_rows > data.per_page %}
+                <nav aria-label="数据分页">
+                    <ul class="pagination justify-content-center">
+                        {% if data.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('view_data', page=data.prev_page, search=search, search_column=search_column, filter_column=filter_column, filter_operator=filter_operator, filter_value=filter_value) }}">
+                                    <i class="fas fa-chevron-left"></i> 上一页
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        <!-- 页码显示逻辑 -->
+                        {% set start_page = [1, data.page - 2]|max %}
+                        {% set end_page = [data.page + 2, ((data.total_rows - 1) // data.per_page + 1)]|min %}
+                        
+                        {% if start_page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('view_data', page=1, search=search, search_column=search_column, filter_column=filter_column, filter_operator=filter_operator, filter_value=filter_value) }}">1</a>
+                            </li>
+                            {% if start_page > 2 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                        
+                        {% for page_num in range(start_page, end_page + 1) %}
+                            <li class="page-item {% if page_num == data.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('view_data', page=page_num, search=search, search_column=search_column, filter_column=filter_column, filter_operator=filter_operator, filter_value=filter_value) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                        
+                        {% set total_pages = (data.total_rows - 1) // data.per_page + 1 %}
+                        {% if end_page < total_pages %}
+                            {% if end_page < total_pages - 1 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('view_data', page=total_pages, search=search, search_column=search_column, filter_column=filter_column, filter_operator=filter_operator, filter_value=filter_value) }}">{{ total_pages }}</a>
+                            </li>
+                        {% endif %}
+                        
+                        {% if data.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('view_data', page=data.next_page, search=search, search_column=search_column, filter_column=filter_column, filter_operator=filter_operator, filter_value=filter_value) }}">
+                                    下一页 <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                
+                <div class="text-center text-muted">
+                    第 {{ data.page }} 页，共 {{ ((data.total_rows - 1) // data.per_page + 1) }} 页
+                    (显示第 {{ ((data.page - 1) * data.per_page + 1) }} - {{ [data.page * data.per_page, data.total_rows]|min }} 行，共 {{ data.total_rows|format_number }} 行)
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 点击行跳转功能
+function viewRowDetail(rowIndex) {
+    window.location.href = `/preview/${rowIndex}`;
+}
+
+// 列显示/隐藏功能
+let hiddenColumns = new Set();
+
+function toggleColumnVisibility(columnName, columnIndex) {
+    const isHidden = hiddenColumns.has(columnIndex);
+    
+    if (isHidden) {
+        // 显示列
+        hiddenColumns.delete(columnIndex);
+        showColumn(columnIndex);
+    } else {
+        // 隐藏列
+        hiddenColumns.add(columnIndex);
+        hideColumn(columnIndex);
+    }
+    
+    // 更新按钮状态
+    updateVisibilityButton(columnName, !isHidden);
+}
+
+function hideColumn(columnIndex) {
+    // 隐藏表头
+    const headerCell = document.querySelector(`th[data-column-index="${columnIndex}"]`);
+    if (headerCell) {
+        headerCell.style.display = 'none';
+    }
+    
+    // 隐藏所有对应的数据单元格
+    const dataCells = document.querySelectorAll(`td[data-column-index="${columnIndex}"]`);
+    dataCells.forEach(cell => {
+        cell.style.display = 'none';
+    });
+}
+
+function showColumn(columnIndex) {
+    // 显示表头
+    const headerCell = document.querySelector(`th[data-column-index="${columnIndex}"]`);
+    if (headerCell) {
+        headerCell.style.display = '';
+    }
+    
+    // 显示所有对应的数据单元格
+    const dataCells = document.querySelectorAll(`td[data-column-index="${columnIndex}"]`);
+    dataCells.forEach(cell => {
+        cell.style.display = '';
+    });
+}
+
+function updateVisibilityButton(columnName, isHidden) {
+    const button = document.querySelector(`button[data-column="${columnName}"]`);
+    if (button) {
+        const icon = button.querySelector('i');
+        if (isHidden) {
+            icon.className = 'fas fa-eye-slash';
+            button.classList.add('column-hidden');
+            button.title = '显示列';
+        } else {
+            icon.className = 'fas fa-eye';
+            button.classList.remove('column-hidden');
+            button.title = '隐藏列';
+        }
+    }
+}
+
+// 添加行悬停效果增强
+document.addEventListener('DOMContentLoaded', function() {
+    // 行悬停效果
+    const rows = document.querySelectorAll('.clickable-row');
+    rows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#e3f2fd';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+    
+    // 列显示/隐藏按钮事件
+    const visibilityButtons = document.querySelectorAll('.column-visibility-btn');
+    visibilityButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const columnName = this.getAttribute('data-column');
+            const columnIndex = parseInt(this.getAttribute('data-column-index'));
+            
+            toggleColumnVisibility(columnName, columnIndex);
+        });
+    });
+});
+</script>
+{% endblock %}

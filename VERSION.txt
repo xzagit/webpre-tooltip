@@ -1,0 +1,57 @@
+Web数据预览器 (webpre-tooltip)
+版本: v2.1
+构建时间: 20250606_150728
+包名: webpre-tooltip-v2.1
+
+主要特性:
+- 支持多种数据格式 (CSV, JSON, JSONL, Parquet, Excel)
+- 数据预览和统计分析
+- 数据可视化
+- 会话隔离
+- 智能工具提示
+- Docker容器化部署
+- 中国镜像源支持
+
+文件清单:
+- app.py
+- build.sh
+- CROSS_PLATFORM_GUIDE.md
+- demo_tooltip.py
+- deploy.sh
+- DEPLOYMENT_GUIDE.md
+- docker-compose.yml
+- Dockerfile
+- Dockerfile_backup
+- docs/TOOLTIP_COMPLETION_REPORT.md
+- docs/TOOLTIP_IMPLEMENTATION_GUIDE.md
+- PROJECT_INFO.txt
+- README.md
+- requirements.txt
+- SESSION_BUGFIX.md
+- session_demo.py
+- SESSION_README.md
+- start_fixed.sh
+- start_webpre_linux.sh
+- start_webpre_macos.sh
+- start_webpre.bat
+- start_with_session.bat
+- start_with_session.sh
+- start.bat
+- start.sh
+- static/css/style.css
+- static/js/main.js
+- templates/base_old.html
+- templates/base.html
+- templates/data.html
+- templates/index.html
+- templates/preview.html
+- templates/row_preview.html
+- templates/statistics.html
+- templates/test_js.html
+- templates/tooltip_demo.html
+- templates/visualization.html
+- test_long_columns.csv
+- test_session_isolation.py
+- test_tooltip_features.py
+- uploads/README.md
+- VERSION.txt

@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}数据可视化 - {{ current_data.filename or '数据查看器' }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="fas fa-chart-bar me-2"></i>数据可视化</h2>
+            {% if current_data.filename %}
+                <p class="text-muted">文件: {{ current_data.filename }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 图表配置面板 -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cog me-2"></i>图表配置
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="chart-form">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="chart-type" class="form-label">图表类型</label>
+                                <select class="form-select" id="chart-type" name="chart_type">
+                                    <option value="bar">柱状图</option>
+                                    <option value="line">折线图</option>
+                                    <option value="scatter">散点图</option>
+                                    <option value="hist">直方图</option>
+                                    <option value="box">箱线图</option>
+                                    <option value="heatmap">热力图</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="x-column" class="form-label">X轴 (必选)</label>
+                                <select class="form-select" id="x-column" name="x_column">
+                                    <option value="">选择列...</option>
+                                    {% for column in columns %}
+                                        <option value="{{ column }}">{{ column }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="y-column" class="form-label">Y轴 (可选)</label>
+                                <select class="form-select" id="y-column" name="y_column">
+                                    <option value="">选择列...</option>
+                                    {% for column in numeric_columns %}
+                                        <option value="{{ column }}">{{ column }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="button" class="btn btn-primary w-100" id="generate-chart">
+                                    <i class="fas fa-chart-line me-2"></i>生成图表
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图表显示区域 -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-area me-2"></i>图表预览
+                    </h5>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="download-chart" style="display: none;">
+                        <i class="fas fa-download me-1"></i>下载图表
+                    </button>
+                </div>
+                <div class="card-body text-center" id="chart-container">
+                    <div class="py-5">
+                        <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">选择图表类型和列，然后点击"生成图表"来创建可视化</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图表说明 -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>图表类型说明
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><strong>柱状图:</strong> 适用于分类数据的计数或数值比较</li>
+                                <li><strong>折线图:</strong> 适用于显示数据随时间的变化趋势</li>
+                                <li><strong>散点图:</strong> 适用于显示两个数值变量之间的关系</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><strong>直方图:</strong> 适用于显示数值数据的分布</li>
+                                <li><strong>箱线图:</strong> 适用于显示数据的分布和异常值</li>
+                                <li><strong>热力图:</strong> 适用于显示数值变量之间的相关性</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 加载指示器 -->
+<div class="d-none" id="loading-indicator">
+    <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">生成中...</span>
+        </div>
+        <p class="mt-2">正在生成图表...</p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const generateBtn = document.getElementById('generate-chart');
+    const downloadBtn = document.getElementById('download-chart');
+    const chartContainer = document.getElementById('chart-container');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    
+    let currentChartData = null;
+    
+    generateBtn.addEventListener('click', function() {
+        const chartType = document.getElementById('chart-type').value;
+        const xColumn = document.getElementById('x-column').value;
+        const yColumn = document.getElementById('y-column').value;
+        
+        if (!xColumn) {
+            alert('请选择X轴列');
+            return;
+        }
+        
+        // 显示加载指示器
+        chartContainer.innerHTML = loadingIndicator.innerHTML;
+        downloadBtn.style.display = 'none';
+        
+        // 发送请求生成图表
+        fetch('/generate_chart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chart_type: chartType,
+                x_column: xColumn,
+                y_column: yColumn
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                chartContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        生成图表时出错: ${data.error}
+                    </div>
+                `;
+            } else {
+                // 显示图表
+                chartContainer.innerHTML = `
+                    <img src="data:image/png;base64,${data.image}" 
+                         class="img-fluid" 
+                         alt="生成的图表"
+                         style="max-height: 600px;">
+                `;
+                currentChartData = data.image;
+                downloadBtn.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            chartContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    生成图表时出错: ${error.message}
+                </div>
+            `;
+        });
+    });
+    
+    // 下载图表
+    downloadBtn.addEventListener('click', function() {
+        if (currentChartData) {
+            const link = document.createElement('a');
+            link.href = 'data:image/png;base64,' + currentChartData;
+            link.download = 'chart.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    });
+    
+    // 图表类型改变时的提示
+    document.getElementById('chart-type').addEventListener('change', function() {
+        const chartType = this.value;
+        const yColumnSelect = document.getElementById('y-column');
+        
+        if (chartType === 'scatter') {
+            yColumnSelect.setAttribute('required', 'required');
+            yColumnSelect.parentElement.querySelector('label').innerHTML = 'Y轴 (必选)';
+        } else if (chartType === 'heatmap') {
+            yColumnSelect.removeAttribute('required');
+            yColumnSelect.parentElement.querySelector('label').innerHTML = 'Y轴 (自动选择数值列)';
+        } else {
+            yColumnSelect.removeAttribute('required');
+            yColumnSelect.parentElement.querySelector('label').innerHTML = 'Y轴 (可选)';
+        }
+    });
+});
+</script>
+{% endblock %}

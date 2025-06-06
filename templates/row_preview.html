@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% block title %}行数据预览 - 数据查看器{% endblock %}
+
+{% block extra_css %}
+<style>
+.row-preview-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.json-preview {
+    background-color: #1a202c;
+    color: #e2e8f0;
+    border-radius: 12px;
+    padding: 25px;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    border: 1px solid #2d3748;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.json-preview .json-key {
+    color: #81e6d9;
+    font-weight: 600;
+}
+
+.json-preview .json-string {
+    color: #90cdf4;
+}
+
+.json-preview .json-number {
+    color: #f687b3;
+}
+
+.json-preview .json-null {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.json-preview .json-bool {
+    color: #fbb6ce;
+    font-weight: 600;
+}
+
+.copy-btn {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.copy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+}
+
+.field-info {
+    background: linear-gradient(145deg, #ffffff, #f8f9fa);
+    border: none;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.field-info:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.field-name {
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
+.field-value {
+    color: #4a5568;
+    font-family: 'SF Mono', 'Monaco', monospace;
+    background: linear-gradient(145deg, #f7fafc, #edf2f7);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    word-break: break-all;
+}
+
+.field-type {
+    font-size: 0.85em;
+    color: #718096;
+    font-style: italic;
+    margin-top: 5px;
+}
+
+.breadcrumb {
+    background: none;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.breadcrumb-item a {
+    color: #0d6efd;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: #0a58ca;
+}
+
+.navigation-buttons {
+    position: sticky;
+    top: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-modern {
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-modern:hover::before {
+    left: 100%;
+}
+
+.btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <!-- 面包屑导航 -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">首页</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('view_data') }}">数据浏览</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">第 {{ row_index + 1 }} 行数据</li>
+                </ol>
+            </nav>
+            
+            <!-- 标题区域 -->
+            <div class="row-preview-container">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1">
+                            <i class="fas fa-search-plus me-2"></i>行数据详览
+                        </h2>
+                        <p class="mb-0 opacity-75">
+                            <i class="fas fa-file-alt me-1"></i>{{ current_data.filename }} 
+                            <span class="mx-2">|</span>
+                            <i class="fas fa-list-ol me-1"></i>第 {{ row_index + 1 }} 行，共 {{ current_data.file_info.rows|format_number }} 行
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <i class="fas fa-database" style="font-size: 3rem; opacity: 0.3;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- 导航面板 -->
+        <div class="col-md-3">
+            <div class="navigation-buttons">
+                <h6 class="mb-3"><i class="fas fa-compass me-2"></i>快速导航</h6>
+                
+                <div class="d-grid gap-2">
+                    {% if row_index > 0 %}
+                        <a href="{{ url_for('view_row_preview', row_index=row_index-1) }}" 
+                           class="btn btn-outline-primary btn-modern">
+                            <i class="fas fa-chevron-up me-2"></i>上一行
+                        </a>
+                    {% endif %}
+                    
+                    {% if row_index < current_data.file_info.rows - 1 %}
+                        <a href="{{ url_for('view_row_preview', row_index=row_index+1) }}" 
+                           class="btn btn-outline-primary btn-modern">
+                            <i class="fas fa-chevron-down me-2"></i>下一行
+                        </a>
+                    {% endif %}
+                    
+                    <hr class="my-3">
+                    
+                    <a href="{{ url_for('view_data') }}" class="btn btn-secondary btn-modern">
+                        <i class="fas fa-table me-2"></i>返回数据表
+                    </a>
+                    
+                    <a href="{{ url_for('view_preview') }}" class="btn btn-info btn-modern">
+                        <i class="fas fa-eye me-2"></i>首行预览
+                    </a>
+                </div>
+                
+                <div class="mt-4">
+                    <small class="text-muted">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        提示：在数据表中点击任意行都可快速跳转到该行详情
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主内容区 -->
+        <div class="col-md-9">
+            <!-- JSON预览卡片 -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-code me-2 text-primary"></i>JSON 数据格式
+                    </h5>
+                    <button class="btn btn-outline-primary btn-sm copy-btn" onclick="copyToClipboard()">
+                        <i class="fas fa-copy me-1"></i>复制JSON
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="json-preview" id="jsonContent">{{ json_string }}</div>
+                </div>
+            </div>
+            
+            <!-- 字段详情 -->
+            <div class="mb-4">
+                <h5 class="mb-4"><i class="fas fa-th-list me-2 text-success"></i>字段详情解析</h5>
+                <div class="row">
+                    {% for key, value in row_dict.items() %}
+                    <div class="col-lg-6 col-xl-4">
+                        <div class="field-info">
+                            <div class="field-name">
+                                <i class="fas fa-tag me-1 text-primary"></i>{{ key }}
+                            </div>
+                            <div class="field-value">
+                                {% if value is none %}
+                                    <span class="json-null">null</span>
+                                {% elif value is sameas true or value is sameas false %}
+                                    <span class="json-bool">{{ value|lower }}</span>
+                                {% elif value is number %}
+                                    <span class="json-number">{{ value }}</span>
+                                {% else %}
+                                    <span class="json-string">"{{ value }}"</span>
+                                {% endif %}
+                            </div>
+                            <div class="field-type">
+                                <i class="fas fa-info-circle me-1"></i>
+                                类型: {{ value.__class__.__name__ if value is not none else 'NoneType' }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyToClipboard() {
+    const jsonContent = document.getElementById('jsonContent').textContent;
+    navigator.clipboard.writeText(jsonContent).then(function() {
+        // 显示复制成功提示
+        const btn = document.querySelector('.copy-btn');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check me-1"></i>已复制';
+        btn.classList.remove('btn-outline-primary');
+        btn.classList.add('btn-success');
+        
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-primary');
+        }, 2000);
+    }).catch(function(err) {
+        console.error('复制失败: ', err);
+        alert('复制失败，请手动选择文本复制');
+    });
+}
+
+// JSON语法高亮
+document.addEventListener('DOMContentLoaded', function() {
+    const jsonElement = document.getElementById('jsonContent');
+    let content = jsonElement.textContent;
+    
+    // 简单的JSON语法高亮
+    content = content.replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:');
+    content = content.replace(/: "([^"]*)"/g, ': <span class="json-string">"$1"</span>');
+    content = content.replace(/: (\d+\.?\d*)/g, ': <span class="json-number">$1</span>');
+    content = content.replace(/: (true|false)/g, ': <span class="json-bool">$1</span>');
+    content = content.replace(/: null/g, ': <span class="json-null">null</span>');
+    
+    jsonElement.innerHTML = content;
+});
+</script>
+{% endblock %}

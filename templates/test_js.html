@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript功能测试</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>JavaScript功能测试</h1>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <button type="button" class="btn btn-primary me-2" onclick="testCloseFile()">
+                    测试关闭文件函数
+                </button>
+                
+                <button type="button" class="btn btn-success me-2" onclick="testExportFile()">
+                    测试导出文件函数
+                </button>
+                
+                <button type="button" class="btn btn-info me-2" onclick="checkFunctions()">
+                    检查函数状态
+                </button>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <h3>测试结果:</h3>
+                <div id="test-results" class="alert alert-info">
+                    点击上面的按钮开始测试...
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <h3>实际关闭按钮测试:</h3>
+                <a class="btn btn-danger" href="#" onclick="confirmCloseFile()">
+                    <i class="fas fa-times me-1"></i>关闭文件
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/main.js"></script>
+    
+    <script>
+        function testCloseFile() {
+            const results = document.getElementById('test-results');
+            try {
+                if (typeof window.confirmCloseFile === 'function') {
+                    results.innerHTML = '<div class="alert alert-success">✓ confirmCloseFile 函数存在且可调用</div>';
+                    console.log('Testing confirmCloseFile function...');
+                    // 不实际调用，只是测试存在性
+                } else {
+                    results.innerHTML = '<div class="alert alert-danger">✗ confirmCloseFile 函数不存在</div>';
+                }
+            } catch (error) {
+                results.innerHTML = '<div class="alert alert-danger">✗ 错误: ' + error.message + '</div>';
+            }
+        }
+        
+        function testExportFile() {
+            const results = document.getElementById('test-results');
+            try {
+                if (typeof window.confirmExport === 'function') {
+                    results.innerHTML = '<div class="alert alert-success">✓ confirmExport 函数存在且可调用</div>';
+                    console.log('Testing confirmExport function...');
+                } else {
+                    results.innerHTML = '<div class="alert alert-danger">✗ confirmExport 函数不存在</div>';
+                }
+            } catch (error) {
+                results.innerHTML = '<div class="alert alert-danger">✗ 错误: ' + error.message + '</div>';
+            }
+        }
+        
+        function checkFunctions() {
+            const results = document.getElementById('test-results');
+            let html = '<h5>函数检查结果:</h5>';
+            
+            html += '<p><strong>confirmCloseFile:</strong> ' + (typeof window.confirmCloseFile) + '</p>';
+            html += '<p><strong>confirmExport:</strong> ' + (typeof window.confirmExport) + '</p>';
+            html += '<p><strong>DOM加载状态:</strong> ' + document.readyState + '</p>';
+            html += '<p><strong>main.js加载状态:</strong> ' + (typeof initDataTable !== 'undefined' ? '已加载' : '未加载') + '</p>';
+            
+            results.innerHTML = html;
+        }
+        
+        // 页面加载完成时自动检查
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Test page DOM loaded');
+            setTimeout(checkFunctions, 1000); // 延迟1秒检查
+        });
+    </script>
+</body>
+</html>

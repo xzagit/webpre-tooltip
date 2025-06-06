@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  webpre-tooltip:
+    build: 
+      context: .
+      dockerfile: Dockerfile  # 使用中国镜像源版本
+    image: webpre-tooltip:v2.1
+    container_name: webpre-tooltip
+    ports:
+      - "10015:10015"
+    volumes:
+      # 挂载uploads目录以持久化上传的文件
+      - ./uploads:/app/uploads
+      # 可选：挂载配置文件（如果需要运行时修改配置）
+      - ./app.py:/app/app.py:ro
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Shanghai  # 设置时区为中国
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:10015/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    # 日志配置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

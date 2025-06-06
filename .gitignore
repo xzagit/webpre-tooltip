@@ -1,0 +1,254 @@
+# Web数据预览器 - Git忽略文件
+# 生成时间: 2025-06-06
+
+# ==================== Python ====================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# ==================== 项目特定 ====================
+# 上传文件夹（保留README.md）
+uploads/*
+!uploads/README.md
+
+# 临时文件
+temp/
+tmp/
+*.tmp
+
+# 数据文件
+*.csv
+*.json
+*.jsonl
+*.parquet
+*.xlsx
+*.xls
+
+# 日志文件
+*.log
+logs/
+
+# 缓存文件
+.cache/
+cache/
+
+# 会话文件
+flask_session/
+sessions/
+
+# 生成的图片
+static/images/generated/
+plots/
+charts/
+
+# 配置文件（如果包含敏感信息）
+config.py
+local_config.py
+production_config.py
+
+# ==================== 开发工具 ====================
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# PyCharm
+.idea/
+
+# ==================== 系统文件 ====================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# ==================== Docker ====================
+# Docker volumes
+docker-volumes/
+
+# Docker logs
+docker-compose.override.yml
+
+# ==================== 其他 ====================
+# 备份文件
+*.bak
+*.backup
+*_backup
+*_old
+
+# 压缩文件
+*.zip
+*.tar.gz
+*.rar
+
+# 敏感信息
+secrets/
+.secrets
+*.key
+*.pem
+*.p12
+
+# 性能分析
+*.prof
+
+# 数据库
+*.db
+*.sqlite
+
+# Node.js (如果有前端构建)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 测试覆盖率
+.coverage
+htmlcov/
+
+# 文档生成
+docs/_build/
+
+# 本地开发配置
+.local
+local/
