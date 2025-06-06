@@ -71,27 +71,23 @@ uploads/*
 *.xlsx
 *.xls
 
+# 保留必要的测试数据文件
+!test/test_long_columns.csv
+
 # 备份文件
 *.backup
 *.bak
 *_backup
 *_old
 
-# Docker 相关
-Dockerfile*
-!Dockerfile
-!Dockerfile.optimized
-!Dockerfile.light
+# Docker 相关 - 排除额外的 Docker 文件，保留主要构建文件
+Dockerfile_backup
 docker-compose*.yml
-.dockerignore
 
 # 构建脚本
 build*.sh
 deploy*.sh
 start_*
-
-# 版本控制
-VERSION.txt
 
 # 开发配置
 .env.local
