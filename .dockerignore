@@ -71,9 +71,6 @@ uploads/*
 *.xlsx
 *.xls
 
-# 保留必要的测试数据文件
-!test/test_long_columns.csv
-
 # 备份文件
 *.backup
 *.bak

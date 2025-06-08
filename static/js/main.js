@@ -257,6 +257,15 @@ function initTooltips() {
 
 // 页面加载完成后初始化所有功能
 document.addEventListener('DOMContentLoaded', function() {
+    // 检查页面加载类型，如果是刷新则清除状态
+    if (performance.getEntriesByType) {
+        const navEntries = performance.getEntriesByType('navigation');
+        if (navEntries.length > 0 && navEntries[0].type === 'reload') {
+            // 页面刷新，清除隐藏列状态
+            sessionStorage.removeItem('hiddenColumns');
+        }
+    }
+    
     initDataTable();
     initSearchFeatures();
     initFilterFeatures();
@@ -272,9 +281,327 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化列可见性控制
     initColumnVisibility();
     
+    // 初始化快捷操作按钮
+    initQuickActions();
+    
+    // 初始化列搜索功能
+    initColumnSearch();
+    
+    // 加载列可见性状态（必须在initColumnVisibility之后）
+    loadGlobalColumnVisibilityState();
+    
+    // 初始化列统计信息
+    updateColumnStats();
+    
+    // 优化表格布局
+    optimizeTableLayout();
+    
+    // 处理响应式表格
+    handleResponsiveTable();
+    
+    // 增强分页交互
+    enhancePaginationInteraction();
+    
     // 初始化所有tooltips
     initTooltips();
 });
+
+// 监听页面卸载事件
+window.addEventListener('beforeunload', function() {
+    // 保存当前状态（防止意外关闭）
+    if (typeof saveGlobalColumnVisibilityState === 'function') {
+        saveGlobalColumnVisibilityState();
+    }
+});
+
+// 监听页面隐藏事件（用户切换标签页等）
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden && typeof saveGlobalColumnVisibilityState === 'function') {
+        // 页面变为不可见时保存状态
+        saveGlobalColumnVisibilityState();
+    }
+});
+
+// 更新列统计信息
+function updateColumnStats() {
+    const visibleCount = document.querySelectorAll('.data-table th').length - globalHiddenColumns.size;
+    const hiddenCount = globalHiddenColumns.size;
+    
+    const visibleElement = document.getElementById('visibleColumnsCount');
+    const hiddenElement = document.getElementById('hiddenColumnsCount');
+    
+    if (visibleElement) {
+        visibleElement.classList.add('updating');
+        setTimeout(() => {
+            visibleElement.textContent = visibleCount;
+            visibleElement.classList.remove('updating');
+        }, 100);
+    }
+    
+    if (hiddenElement) {
+        hiddenElement.classList.add('updating');
+        setTimeout(() => {
+            hiddenElement.textContent = hiddenCount;
+            hiddenElement.classList.remove('updating');
+        }, 100);
+    }
+}
+
+// 显示所有列
+function showAllColumns() {
+    const buttons = document.querySelectorAll('.column-visibility-btn');
+    buttons.forEach(button => {
+        const columnIndex = parseInt(button.getAttribute('data-column-index'));
+        if (globalHiddenColumns.has(columnIndex)) {
+            globalHiddenColumns.delete(columnIndex);
+            button.classList.remove('column-hidden');
+            const icon = button.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-eye';
+            }
+            button.setAttribute('title', '点击隐藏此列');
+            
+            // 显示表格列
+            toggleTableColumn(columnIndex, true);
+            
+            // 更新tooltip
+            const tooltipInstance = bootstrap.Tooltip.getInstance(button);
+            if (tooltipInstance) {
+                tooltipInstance.setContent({ '.tooltip-inner': '点击隐藏此列' });
+            }
+        }
+    });
+    
+    saveGlobalColumnVisibilityState();
+    updateColumnStats();
+}
+
+// 隐藏所有列（保留第一列）
+function hideAllColumns() {
+    const buttons = document.querySelectorAll('.column-visibility-btn');
+    buttons.forEach((button, index) => {
+        // 保留第一列不隐藏
+        if (index === 0) return;
+        
+        const columnIndex = parseInt(button.getAttribute('data-column-index'));
+        if (!globalHiddenColumns.has(columnIndex)) {
+            globalHiddenColumns.add(columnIndex);
+            button.classList.add('column-hidden');
+            const icon = button.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-eye-slash';
+            }
+            button.setAttribute('title', '点击显示此列');
+            
+            // 隐藏表格列
+            toggleTableColumn(columnIndex, false);
+            
+            // 更新tooltip
+            const tooltipInstance = bootstrap.Tooltip.getInstance(button);
+            if (tooltipInstance) {
+                tooltipInstance.setContent({ '.tooltip-inner': '点击显示此列' });
+            }
+        }
+    });
+    
+    saveGlobalColumnVisibilityState();
+    updateColumnStats();
+}
+
+// 初始化快捷操作按钮
+function initQuickActions() {
+    const showAllBtn = document.getElementById('showAllColumnsBtn');
+    const hideAllBtn = document.getElementById('hideAllColumnsBtn');
+    
+    if (showAllBtn) {
+        showAllBtn.addEventListener('click', function() {
+            showAllColumns();
+            
+            // 添加视觉反馈
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    }
+    
+    if (hideAllBtn) {
+        hideAllBtn.addEventListener('click', function() {
+            hideAllColumns();
+            
+            // 添加视觉反馈
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    }
+}
+
+// 列搜索功能
+function initColumnSearch() {
+    const searchInput = document.getElementById('columnSearchInput');
+    const clearButton = document.getElementById('clearColumnSearch');
+    const columnsList = document.getElementById('columnsList');
+    
+    if (!searchInput || !clearButton || !columnsList) return;
+    
+    let searchTimeout;
+    
+    // 搜索输入事件
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            performColumnSearch(this.value.trim().toLowerCase());
+        }, 200); // 防抖，200ms后执行搜索
+    });
+    
+    // 清空搜索
+    clearButton.addEventListener('click', function() {
+        searchInput.value = '';
+        clearColumnSearch();
+        searchInput.focus();
+    });
+    
+    // 回车键快速搜索
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            performColumnSearch(this.value.trim().toLowerCase());
+        } else if (e.key === 'Escape') {
+            this.value = '';
+            clearColumnSearch();
+        }
+    });
+}
+
+// 执行列搜索
+function performColumnSearch(searchTerm) {
+    const columnItems = document.querySelectorAll('.modern-column-item');
+    const columnsList = document.getElementById('columnsList');
+    let visibleCount = 0;
+    let hasResults = false;
+    
+    // 移除之前的搜索结果提示
+    const existingNoResults = columnsList.querySelector('.no-search-results');
+    if (existingNoResults) {
+        existingNoResults.remove();
+    }
+    
+    const existingCount = columnsList.querySelector('.search-results-count');
+    if (existingCount) {
+        existingCount.remove();
+    }
+    
+    if (!searchTerm) {
+        clearColumnSearch();
+        return;
+    }
+    
+    columnItems.forEach(item => {
+        const columnNameElement = item.querySelector('.column-name-text');
+        if (!columnNameElement) return;
+        
+        const columnName = columnNameElement.textContent.toLowerCase();
+        const matches = columnName.includes(searchTerm);
+        
+        if (matches) {
+            item.classList.remove('search-hidden');
+            item.classList.add('search-highlight');
+            visibleCount++;
+            hasResults = true;
+            
+            // 高亮匹配的文本
+            highlightSearchMatch(columnNameElement, searchTerm);
+        } else {
+            item.classList.add('search-hidden');
+            item.classList.remove('search-highlight');
+            
+            // 清除高亮
+            clearHighlight(columnNameElement);
+        }
+    });
+    
+    // 显示搜索结果计数
+    if (hasResults) {
+        const countElement = document.createElement('div');
+        countElement.className = 'search-results-count';
+        countElement.textContent = `找到 ${visibleCount} 个匹配的列`;
+        columnsList.appendChild(countElement);
+    } else {
+        // 显示无结果提示
+        const noResultsElement = document.createElement('div');
+        noResultsElement.className = 'no-search-results';
+        noResultsElement.innerHTML = `
+            <i class="fas fa-search"></i><br>
+            未找到包含 "${searchTerm}" 的列
+        `;
+        columnsList.appendChild(noResultsElement);
+    }
+    
+    // 如果列表是折叠状态，自动展开以显示搜索结果
+    if (columnsList.classList.contains('collapsed') && hasResults) {
+        const toggleBtn = document.getElementById('toggleColumnsBtn');
+        if (toggleBtn && !toggleBtn.classList.contains('expanded')) {
+            toggleBtn.click();
+        }
+    }
+}
+
+// 清空列搜索
+function clearColumnSearch() {
+    const columnItems = document.querySelectorAll('.modern-column-item');
+    const columnsList = document.getElementById('columnsList');
+    
+    columnItems.forEach(item => {
+        item.classList.remove('search-hidden', 'search-highlight');
+        
+        // 清除高亮
+        const columnNameElement = item.querySelector('.column-name-text');
+        if (columnNameElement) {
+            clearHighlight(columnNameElement);
+        }
+    });
+    
+    // 移除搜索结果提示
+    const existingNoResults = columnsList.querySelector('.no-search-results');
+    if (existingNoResults) {
+        existingNoResults.remove();
+    }
+    
+    const existingCount = columnsList.querySelector('.search-results-count');
+    if (existingCount) {
+        existingCount.remove();
+    }
+}
+
+// 高亮搜索匹配的文本
+function highlightSearchMatch(element, searchTerm) {
+    const originalText = element.getAttribute('data-original-text') || element.textContent;
+    
+    // 保存原始文本
+    if (!element.getAttribute('data-original-text')) {
+        element.setAttribute('data-original-text', originalText);
+    }
+    
+    const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
+    const highlightedText = originalText.replace(regex, '<mark class="search-highlight-text">$1</mark>');
+    
+    element.innerHTML = highlightedText;
+}
+
+// 清除高亮
+function clearHighlight(element) {
+    const originalText = element.getAttribute('data-original-text');
+    if (originalText) {
+        element.textContent = originalText;
+    }
+}
+
+// 转义正则表达式特殊字符
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 // 工具函数
 function formatFileSize(bytes) {
@@ -289,31 +616,178 @@ function formatNumber(num) {
     return new Intl.NumberFormat('zh-CN').format(num);
 }
 
-// 响应式表格处理
-function handleResponsiveTable() {
-    const tables = document.querySelectorAll('.table-responsive');
-    tables.forEach(table => {
-        // 添加滚动提示
-        const scrollHint = document.createElement('div');
-        scrollHint.className = 'text-muted small mt-2';
-        scrollHint.innerHTML = '<i class="fas fa-arrows-alt-h me-1"></i>表格可以左右滚动查看更多列';
-        table.parentNode.insertBefore(scrollHint, table.nextSibling);
-        
-        // 检测滚动状态
-        table.addEventListener('scroll', function() {
-            const isScrolled = this.scrollLeft > 0;
-            if (isScrolled) {
-                scrollHint.style.display = 'none';
-            } else {
-                scrollHint.style.display = 'block';
+// 表格宽度自适应和滚动优化
+function optimizeTableLayout() {
+    const tableContainer = document.querySelector('.resizable-table-container');
+    const table = document.querySelector('.data-table');
+    
+    if (!tableContainer || !table) return;
+    
+    // 计算表格理想宽度
+    const containerWidth = tableContainer.parentElement.clientWidth;
+    const columns = table.querySelectorAll('th');
+    
+    // 设置表格最大宽度为容器宽度
+    table.style.maxWidth = containerWidth + 'px';
+    
+    // 智能调整列宽
+    const columnCount = columns.length;
+    const idealColumnWidth = Math.max(120, (containerWidth - 80) / columnCount); // 减去行号列宽度
+    
+    columns.forEach((th, index) => {
+        if (index === 0) {
+            // 行号列固定宽度
+            th.style.width = '60px';
+            th.style.minWidth = '60px';
+            th.style.maxWidth = '60px';
+        } else {
+            // 其他列自适应
+            const headerText = th.textContent;
+            const estimatedWidth = Math.max(
+                idealColumnWidth,
+                headerText.length * 8 + 40, // 根据文本长度估算
+                100 // 最小宽度
+            );
+            th.style.width = Math.min(estimatedWidth, 300) + 'px'; // 最大300px
+        }
+    });
+    
+    // 同步设置表格数据列宽度
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        cells.forEach((cell, index) => {
+            const correspondingHeader = columns[index];
+            if (correspondingHeader) {
+                cell.style.width = correspondingHeader.style.width;
+                cell.style.minWidth = correspondingHeader.style.minWidth;
+                cell.style.maxWidth = correspondingHeader.style.maxWidth;
             }
         });
     });
 }
 
-// 初始化响应式功能
+// 智能列宽调整
+function smartColumnResize() {
+    const table = document.querySelector('.data-table');
+    const container = document.querySelector('.resizable-table-container');
+    
+    if (!table || !container) return;
+    
+    const availableWidth = container.clientWidth - 20; // 留出边距
+    const columns = table.querySelectorAll('th');
+    const visibleColumns = Array.from(columns).filter(col => {
+        const index = Array.from(columns).indexOf(col);
+        return !globalHiddenColumns.has(index - 1); // 排除行号列
+    });
+    
+    if (visibleColumns.length === 0) return;
+    
+    // 计算当前表格宽度
+    let currentWidth = 0;
+    visibleColumns.forEach(col => {
+        currentWidth += col.offsetWidth;
+    });
+    
+    // 如果表格宽度超出容器，进行智能调整
+    if (currentWidth > availableWidth) {
+        const scaleFactor = availableWidth / currentWidth * 0.95; // 留5%缓冲
+        
+        visibleColumns.forEach(col => {
+            const currentWidth = col.offsetWidth;
+            const newWidth = Math.max(80, currentWidth * scaleFactor); // 最小80px
+            col.style.width = newWidth + 'px';
+            
+            // 同步更新数据列
+            const columnIndex = Array.from(columns).indexOf(col);
+            const dataCells = table.querySelectorAll(`td:nth-child(${columnIndex + 1})`);
+            dataCells.forEach(cell => {
+                cell.style.width = newWidth + 'px';
+            });
+        });
+    }
+}
+
+// 表格自适应观察器
+function initTableResizeObserver() {
+    const container = document.querySelector('.resizable-table-container');
+    if (!container) return;
+    
+    // 使用 ResizeObserver 监听容器大小变化
+    if (window.ResizeObserver) {
+        const resizeObserver = new ResizeObserver(debounce(() => {
+            optimizeTableLayout();
+            smartColumnResize();
+            handleResponsiveTable();
+        }, 250));
+        
+        resizeObserver.observe(container);
+    } else {
+        // 降级到 resize 事件
+        window.addEventListener('resize', debounce(() => {
+            optimizeTableLayout();
+            smartColumnResize();
+            handleResponsiveTable();
+        }, 250));
+    }
+}
+
+// 快速跳转到页面功能
+function initQuickPageJump() {
+    const paginationContainer = document.querySelector('.pagination-container');
+    if (!paginationContainer) return;
+    
+    // 添加快速跳转输入框
+    const quickJump = document.createElement('div');
+    quickJump.className = 'quick-page-jump mt-3';
+    quickJump.innerHTML = `
+        <div class="input-group input-group-sm justify-content-center" style="max-width: 200px; margin: 0 auto;">
+            <span class="input-group-text">跳转到</span>
+            <input type="number" class="form-control text-center" id="quickPageInput" min="1" max="${Math.ceil(parseInt(document.querySelector('.pagination-info').textContent.match(/共 (\d+) 页/)?.[1] || 1))}" placeholder="页码">
+            <button class="btn btn-outline-primary" type="button" id="quickPageBtn">
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    `;
+    
+    paginationContainer.appendChild(quickJump);
+    
+    // 绑定事件
+    const input = document.getElementById('quickPageInput');
+    const button = document.getElementById('quickPageBtn');
+    
+    const jumpToPage = () => {
+        const pageNum = parseInt(input.value);
+        const maxPage = parseInt(input.getAttribute('max'));
+        
+        if (pageNum && pageNum >= 1 && pageNum <= maxPage) {
+            const currentUrl = new URL(window.location);
+            currentUrl.searchParams.set('page', pageNum);
+            window.location.href = currentUrl.toString();
+        } else {
+            input.classList.add('is-invalid');
+            setTimeout(() => input.classList.remove('is-invalid'), 2000);
+        }
+    };
+    
+    button.addEventListener('click', jumpToPage);
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            jumpToPage();
+        }
+    });
+}
+
+// 页面加载完成后初始化表格布局和交互增强功能
 document.addEventListener('DOMContentLoaded', function() {
+    // 优化表格布局
+    optimizeTableLayout();
+    
+    // 初始化响应式表格处理
     handleResponsiveTable();
+    
+    // 增强分页按钮交互
+    enhancePaginationInteraction();
 });
 
 // 表格列宽调整功能
@@ -545,6 +1019,53 @@ function initColumnToggle() {
 }
 
 // 列可见性控制功能
+let globalHiddenColumns = new Set();
+
+// 从sessionStorage加载隐藏列状态
+function loadGlobalColumnVisibilityState() {
+    const savedState = sessionStorage.getItem('hiddenColumns');
+    if (savedState) {
+        try {
+            const hiddenColumnIndices = JSON.parse(savedState);
+            globalHiddenColumns = new Set(hiddenColumnIndices);
+            
+            // 应用保存的状态
+            globalHiddenColumns.forEach(columnIndex => {
+                const button = document.querySelector(`button[data-column-index="${columnIndex}"]`);
+                if (button) {
+                    button.classList.add('column-hidden');
+                    const icon = button.querySelector('i');
+                    if (icon) {
+                        icon.className = 'fas fa-eye-slash';
+                    }
+                    button.setAttribute('title', '点击显示此列');
+                    
+                    // 隐藏对应的表格列
+                    toggleTableColumn(columnIndex, false);
+                    
+                    // 更新tooltip
+                    const tooltipInstance = bootstrap.Tooltip.getInstance(button);
+                    if (tooltipInstance) {
+                        tooltipInstance.dispose();
+                        new bootstrap.Tooltip(button);
+                    }
+                }
+            });
+            
+            // 更新列统计信息
+            updateColumnStats();
+        } catch (e) {
+            console.warn('Failed to load column visibility state:', e);
+            sessionStorage.removeItem('hiddenColumns');
+        }
+    }
+}
+
+// 保存隐藏列状态到sessionStorage
+function saveGlobalColumnVisibilityState() {
+    sessionStorage.setItem('hiddenColumns', JSON.stringify([...globalHiddenColumns]));
+}
+
 function initColumnVisibility() {
     const visibilityButtons = document.querySelectorAll('.column-visibility-btn');
     
@@ -559,18 +1080,38 @@ function initColumnVisibility() {
             // 切换按钮状态
             const isHidden = this.classList.toggle('column-hidden');
             
-            // 更新图标
+            // 更新全局状态
+            if (isHidden) {
+                globalHiddenColumns.add(columnIndex);
+            } else {
+                globalHiddenColumns.delete(columnIndex);
+            }
+            
+            // 更新图标和提示文本
             const icon = this.querySelector('i');
             if (isHidden) {
                 icon.className = 'fas fa-eye-slash';
-                this.title = '显示列';
+                this.setAttribute('title', '点击显示此列');
             } else {
                 icon.className = 'fas fa-eye';
-                this.title = '隐藏列';
+                this.setAttribute('title', '点击隐藏此列');
             }
             
             // 切换表格列的可见性
             toggleTableColumn(columnIndex, !isHidden);
+            
+            // 保存状态
+            saveGlobalColumnVisibilityState();
+            
+            // 更新列统计信息
+            updateColumnStats();
+            
+            // 重新初始化tooltip以更新提示文本
+            const tooltipInstance = bootstrap.Tooltip.getInstance(this);
+            if (tooltipInstance) {
+                tooltipInstance.dispose();
+                new bootstrap.Tooltip(this);
+            }
         });
     });
 }
