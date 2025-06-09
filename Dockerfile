@@ -51,9 +51,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY static/ ./static/
 COPY templates/ ./templates/
 
-# 复制测试数据文件
-COPY test/test_long_columns.csv ./test_long_columns.csv
-
 # 复制应用程序Python文件
 COPY app.py demo_tooltip.py ./
 
