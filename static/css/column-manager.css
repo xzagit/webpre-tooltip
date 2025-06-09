@@ -105,10 +105,34 @@
 }
 
 .column-index-badge {
-    background-color: #e9ecef;
-    color: #495057;
-    border-radius: 3px;
+    background-color: #3788d8;
+    color: #ffffff;
+    border-radius: 4px;
     padding: 0.15rem 0.4rem;
     font-size: 0.75rem;
     font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+/* 列号悬停效果 */
+.column-item:hover .column-index-badge {
+    background-color: #2d76c1;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* 添加隐藏按钮样式 */
+#hideAllColumnsBtn {
+    border-left: none;
+}
+
+/* 按钮悬停反馈 */
+.btn-outline-light:hover {
+    background-color: rgba(255,255,255,0.2);
+}
+
+/* 增强全部隐藏/显示按钮 */
+.btn-group .btn-outline-light {
+    transition: all 0.2s ease;
 }

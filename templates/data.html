@@ -46,9 +46,14 @@
                             <span class="fw-bold">
                                 <i class="fas fa-list me-1"></i>显示/隐藏列
                             </span>
-                            <button id="showAllColumnsBtn" class="btn btn-sm btn-outline-light" title="显示所有列">
-                                <i class="fas fa-eye me-1"></i>全部显示
-                            </button>
+                            <div class="btn-group btn-group-sm">
+                                <button id="showAllColumnsBtn" class="btn btn-sm btn-outline-light" title="显示所有列">
+                                    <i class="fas fa-eye me-1"></i>全部显示
+                                </button>
+                                <button id="hideAllColumnsBtn" class="btn btn-sm btn-outline-light" title="隐藏所有列">
+                                    <i class="fas fa-eye-slash me-1"></i>全部隐藏
+                                </button>
+                            </div>
                         </div>
                     </div>
                     
@@ -519,6 +524,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const showAllBtn = document.getElementById('showAllColumnsBtn');
     if (showAllBtn) {
         showAllBtn.addEventListener('click', showAllColumns);
+    }
+    
+    // 全部隐藏按钮事件
+    const hideAllBtn = document.getElementById('hideAllColumnsBtn');
+    if (hideAllBtn) {
+        hideAllBtn.addEventListener('click', function() {
+            // 隐藏所有列（保留第一列）
+            const allColumns = document.querySelectorAll('.column-visibility-btn');
+            allColumns.forEach((button, index) => {
+                // 保留第一列不隐藏
+                if (index === 0) return;
+                
+                const columnIndex = parseInt(button.getAttribute('data-column-index'));
+                if (!hiddenColumns.has(columnIndex)) {
+                    toggleColumnVisibility(columnIndex);
+                }
+            });
+        });
     }
 });
 

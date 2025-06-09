@@ -90,11 +90,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
             
-            // 自动提交表单
-            if (fileForm) {
+            // 使用外部上传处理函数，如果存在
+            if (typeof handleDirectUpload === 'function') {
+                handleDirectUpload(file);
+            }
+            // 否则使用表单提交
+            else if (fileForm) {
                 fileForm.submit();
-            } else {
-                // 如果找不到表单，尝试创建一个并提交
+            } 
+            else {
+                // 如果找不到表单，使用默认上传表单
                 const form = document.getElementById('upload-form');
                 if (form) {
                     form.submit();
@@ -103,6 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
+    }
     }
 });
 
@@ -293,6 +299,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initFilterFeatures();
     initStatistics();
     initFlashMessages();
+    
+    // 初始化快捷操作按钮
+    initQuickActions();
     
     // 初始化表格列调整功能
     initTableColumnResize();
