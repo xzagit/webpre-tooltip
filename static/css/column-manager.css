@@ -1,0 +1,114 @@
+/* 列管理和文件显示优化样式 */
+
+/* 文件名展示优化 */
+.file-name-wrapper {
+    word-wrap: break-word;
+    word-break: break-all;
+    font-size: 0.9rem;
+    padding: 0.25rem 0;
+    max-height: 80px;
+    overflow-y: auto;
+    margin-top: 0.25rem;
+}
+
+/* 简化版列管理器 */
+.simple-column-management-card {
+    border-radius: 12px;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease-in-out;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.simple-column-management-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.simple-column-management-card .card-header {
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #4a6bdf 0%, #5c7cfa 100%);
+}
+
+.column-stats {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    background-color: #f8f9fa;
+}
+
+.simplified-list {
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.simplified-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.simplified-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.simplified-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.simplified-column-item {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: background-color 0.2s ease;
+    padding: 0.25rem 0;
+    font-size: 0.9rem;
+}
+
+.simplified-column-item:hover {
+    background-color: rgba(13, 110, 253, 0.04);
+}
+
+.simplified-column-item:last-child {
+    border-bottom: none;
+}
+
+.simplified-visibility-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: rgba(13, 110, 253, 0.1);
+    border: none;
+    color: #0d6efd;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.simplified-visibility-btn:hover {
+    background: #0d6efd;
+    color: white;
+    transform: scale(1.05);
+}
+
+.simplified-visibility-btn.column-hidden {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+.simplified-visibility-btn.column-hidden:hover {
+    background: #6c757d;
+    color: white;
+}
+
+.column-name-wrapper {
+    flex-grow: 1;
+    font-size: 0.9rem;
+    padding: 0.15rem 0;
+    max-width: 90%;
+}
+
+.column-index-badge {
+    background-color: #e9ecef;
+    color: #495057;
+    border-radius: 3px;
+    padding: 0.15rem 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}

@@ -6,7 +6,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Content Loaded');
     
-    const dragDropArea = document.getElementById('drag-drop-area');
+    const dragDropArea = document.getElementById('file-upload-area') || document.getElementById('drag-drop-area');
     const fileInput = document.getElementById('file-input');
     const fileForm = document.getElementById('file-form');
     
@@ -49,6 +49,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function highlight(e) {
         dragDropArea.classList.add('drag-over');
+        // 添加一个抖动效果
+        dragDropArea.animate([
+            { transform: 'translateY(0)' },
+            { transform: 'translateY(-5px)' },
+            { transform: 'translateY(0)' }
+        ], {
+            duration: 300,
+            iterations: 1
+        });
     }
     
     function unhighlight(e) {
@@ -77,8 +86,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         <i class="fas fa-check-circle"></i>
                         已选择文件: ${fileName} (${fileSize} MB)
                     </div>
-                    <small class="text-muted">点击"上传文件"按钮开始处理</small>
+                    <small class="text-muted">正在上传文件...</small>
                 `;
+            }
+            
+            // 自动提交表单
+            if (fileForm) {
+                fileForm.submit();
+            } else {
+                // 如果找不到表单，尝试创建一个并提交
+                const form = document.getElementById('upload-form');
+                if (form) {
+                    form.submit();
+                } else {
+                    console.error('找不到上传表单');
+                }
             }
         }
     }
@@ -281,12 +303,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化列可见性控制
     initColumnVisibility();
     
-    // 初始化快捷操作按钮
-    initQuickActions();
-    
-    // 初始化列搜索功能
-    initColumnSearch();
-    
     // 加载列可见性状态（必须在initColumnVisibility之后）
     loadGlobalColumnVisibilityState();
     
@@ -438,41 +454,19 @@ function initQuickActions() {
     }
 }
 
-// 列搜索功能
-function initColumnSearch() {
-    const searchInput = document.getElementById('columnSearchInput');
-    const clearButton = document.getElementById('clearColumnSearch');
+// 简化版列管理功能
+function initColumnVisibilityOnly() {
     const columnsList = document.getElementById('columnsList');
+    const showAllBtn = document.getElementById('showAllColumnsBtn');
     
-    if (!searchInput || !clearButton || !columnsList) return;
+    if (!columnsList) return;
     
-    let searchTimeout;
-    
-    // 搜索输入事件
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            performColumnSearch(this.value.trim().toLowerCase());
-        }, 200); // 防抖，200ms后执行搜索
-    });
-    
-    // 清空搜索
-    clearButton.addEventListener('click', function() {
-        searchInput.value = '';
-        clearColumnSearch();
-        searchInput.focus();
-    });
-    
-    // 回车键快速搜索
-    searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            performColumnSearch(this.value.trim().toLowerCase());
-        } else if (e.key === 'Escape') {
-            this.value = '';
-            clearColumnSearch();
-        }
-    });
+    // 添加全部显示按钮事件
+    if (showAllBtn) {
+        showAllBtn.addEventListener('click', function() {
+            showAllColumns();
+        });
+    }
 }
 
 // 执行列搜索

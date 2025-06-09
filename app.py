@@ -276,24 +276,42 @@ def generate_statistics(df):
         'memory_usage': f"{df.memory_usage(deep=True).sum() / 1024 / 1024:.2f} MB"
     }
     
-    # 数值列统计
-    numeric_cols = df.select_dtypes(include=['number']).columns
-    if len(numeric_cols) > 0:
-        stats['numeric'] = df[numeric_cols].describe().round(4).to_dict()
+    try:
+        # 数值列统计
+        numeric_cols = df.select_dtypes(include=['number']).columns
+        if len(numeric_cols) > 0:
+            stats['numeric'] = df[numeric_cols].describe().round(4).to_dict()
+        else:
+            stats['numeric'] = {}
+        
+        # 非数值列统计
+        non_numeric_cols = df.select_dtypes(exclude=['number']).columns
+        stats['categorical'] = {}
+        for col in non_numeric_cols:
+            try:
+                stats['categorical'][col] = {
+                    'unique_count': df[col].nunique(),
+                    'most_common': str(df[col].value_counts().index[0]) if len(df[col].value_counts()) > 0 else '无',
+                    'null_count': df[col].isna().sum()
+                }
+            except Exception as e:
+                print(f"处理列 '{col}' 时出错: {str(e)}")
+                stats['categorical'][col] = {
+                    'unique_count': '计算错误',
+                    'most_common': '计算错误',
+                    'null_count': '计算错误'
+                }
+        
+        # 缺失值信息
+        missing = df.isna().sum()
+        stats['missing'] = missing[missing > 0].to_dict()
     
-    # 非数值列统计
-    non_numeric_cols = df.select_dtypes(exclude=['number']).columns
-    stats['categorical'] = {}
-    for col in non_numeric_cols:
-        stats['categorical'][col] = {
-            'unique_count': df[col].nunique(),
-            'most_common': df[col].value_counts().index[0] if len(df[col].value_counts()) > 0 else '无',
-            'null_count': df[col].isna().sum()
-        }
-    
-    # 缺失值信息
-    missing = df.isna().sum()
-    stats['missing'] = missing[missing > 0].to_dict()
+    except Exception as e:
+        print(f"生成统计信息时出错: {str(e)}")
+        # 提供最小的统计信息以避免模板渲染错误
+        stats['numeric'] = {}
+        stats['categorical'] = {}
+        stats['missing'] = {}
     
     return stats
 
@@ -520,13 +538,24 @@ def view_data():
 @app.route('/statistics')
 def view_statistics():
     """查看统计信息页面"""
-    user_data = get_user_data()
-    if user_data['df'] is None:
-        flash('请先上传一个数据文件', 'warning')
-        return redirect(url_for('index'))
+    try:
+        user_data = get_user_data()
+        if user_data['df'] is None:
+            flash('请先上传一个数据文件', 'warning')
+            return redirect(url_for('index'))
+        
+        # 确保DataFrame可用
+        df = user_data['df']
+        if not isinstance(df, pd.DataFrame):
+            flash('数据格式错误，无法生成统计信息', 'error')
+            return redirect(url_for('index'))
+        
+        stats = generate_statistics(df)
+        return render_template('statistics.html', stats=stats, current_data=user_data)
     
-    stats = generate_statistics(user_data['df'])
-    return render_template('statistics.html', stats=stats, current_data=user_data)
+    except Exception as e:
+        flash(f'生成统计信息时出错: {str(e)}', 'error')
+        return redirect(url_for('index'))
 
 @app.route('/visualization')
 def view_visualization():

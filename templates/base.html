@@ -13,6 +13,8 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- 自定义样式 -->
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/column-manager.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/drag-upload.css') }}" rel="stylesheet">
     
     {% block extra_css %}{% endblock %}
 </head>
@@ -146,14 +148,38 @@
 
     <!-- 拖拽上传区域（隐藏的全屏覆盖层） -->
     <div id="drag-drop-area" class="drag-drop-area position-fixed w-100 h-100 top-0 start-0" 
-         style="display: none; z-index: 9999; background: rgba(13, 110, 253, 0.1);">
+         style="display: none; z-index: 9999;">
         <div class="d-flex align-items-center justify-content-center h-100">
-            <div class="text-center p-5 bg-white rounded shadow">
+            <div class="upload-container text-center p-5 bg-white rounded-lg shadow-lg">
                 <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                <h4>释放文件到此处上传</h4>
-                <p class="text-muted">支持 CSV、JSON、JSONL、Parquet 格式</p>
+                <h3 class="mb-3">释放文件到此处上传</h3>
+                <p class="text-muted mb-4">支持 CSV、JSON、JSONL、Parquet 格式</p>
+                <div class="upload-format-icons d-flex justify-content-center">
+                    <div class="mx-2 p-2 rounded bg-light text-center">
+                        <i class="fas fa-file-csv text-success"></i>
+                        <small class="d-block mt-1">CSV</small>
+                    </div>
+                    <div class="mx-2 p-2 rounded bg-light text-center">
+                        <i class="fas fa-file-code text-primary"></i>
+                        <small class="d-block mt-1">JSON</small>
+                    </div>
+                    <div class="mx-2 p-2 rounded bg-light text-center">
+                        <i class="fas fa-file-alt text-info"></i>
+                        <small class="d-block mt-1">JSONL</small>
+                    </div>
+                    <div class="mx-2 p-2 rounded bg-light text-center">
+                        <i class="fas fa-file text-warning"></i>
+                        <small class="d-block mt-1">Parquet</small>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
+    
+    <!-- 拖拽提示区域 -->
+    <div id="drag-hint" class="drag-hint">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <span>将文件拖放到此处以上传</span>
     </div>
 
     <!-- Bootstrap JS -->
@@ -164,22 +190,43 @@
         // 全局拖拽上传功能
         document.addEventListener('DOMContentLoaded', function() {
             const dragDropOverlay = document.getElementById('drag-drop-area');
+            const dragHint = document.getElementById('drag-hint');
             let dragCounter = 0;
+            let dragHintTimeout;
+            
+            // 页面加载时显示一次拖拽提示
+            setTimeout(() => {
+                showDragHint();
+                setTimeout(hideDragHint, 5000); // 5秒后自动隐藏
+            }, 2000);
             
             // 防止默认拖拽行为
             document.addEventListener('dragenter', function(e) {
                 e.preventDefault();
                 dragCounter++;
+                
                 if (dragCounter === 1) {
+                    // 显示全屏覆盖层
                     dragDropOverlay.style.display = 'block';
+                    setTimeout(() => {
+                        dragDropOverlay.classList.add('active');
+                    }, 10); // 小延迟以确保CSS过渡生效
+                    
+                    // 隐藏拖拽提示
+                    hideDragHint();
                 }
             });
             
             document.addEventListener('dragleave', function(e) {
                 e.preventDefault();
                 dragCounter--;
+                
                 if (dragCounter === 0) {
-                    dragDropOverlay.style.display = 'none';
+                    // 隐藏全屏覆盖层
+                    dragDropOverlay.classList.remove('active');
+                    setTimeout(() => {
+                        dragDropOverlay.style.display = 'none';
+                    }, 300); // 等待过渡效果完成
                 }
             });
             
@@ -190,18 +237,66 @@
             document.addEventListener('drop', function(e) {
                 e.preventDefault();
                 dragCounter = 0;
-                dragDropOverlay.style.display = 'none';
+                
+                // 隐藏全屏覆盖层
+                dragDropOverlay.classList.remove('active');
+                setTimeout(() => {
+                    dragDropOverlay.style.display = 'none';
+                }, 300);
                 
                 const files = e.dataTransfer.files;
                 if (files.length > 0) {
-                    handleFileUpload(files[0]);
+                    // 检查文件类型是否被允许
+                    const file = files[0];
+                    const fileExtension = file.name.split('.').pop().toLowerCase();
+                    const allowedExtensions = ['csv', 'json', 'jsonl', 'parquet', 'pq'];
+                    
+                    if (allowedExtensions.includes(fileExtension)) {
+                        handleFileUpload(files[0]);
+                    } else {
+                        alert('不支持的文件格式。请上传 CSV, JSON, JSONL 或 Parquet 格式文件。');
+                    }
                 }
             });
             
             // 点击覆盖层隐藏
             dragDropOverlay.addEventListener('click', function() {
-                this.style.display = 'none';
+                dragDropOverlay.classList.remove('active');
+                setTimeout(() => {
+                    dragDropOverlay.style.display = 'none';
+                }, 300);
                 dragCounter = 0;
+            });
+            
+            // 显示拖拽提示的函数
+            function showDragHint() {
+                if (dragHint) {
+                    dragHint.classList.add('visible');
+                }
+            }
+            
+            // 隐藏拖拽提示的函数
+            function hideDragHint() {
+                if (dragHint) {
+                    dragHint.classList.remove('visible');
+                }
+            }
+            
+            // 在鼠标移动时自动显示拖拽提示（每隔30秒最多显示一次）
+            let canShowDragHint = true;
+            document.addEventListener('mousemove', function(e) {
+                if (canShowDragHint && e.clientY < 100) { // 鼠标在页面顶部
+                    canShowDragHint = false;
+                    showDragHint();
+                    setTimeout(() => {
+                        hideDragHint();
+                    }, 3000);
+                    
+                    // 30秒内不再显示提示
+                    setTimeout(() => {
+                        canShowDragHint = true;
+                    }, 30000);
+                }
             });
         });
         

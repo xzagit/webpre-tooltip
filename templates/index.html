@@ -53,9 +53,11 @@
                         
                         <form id="upload-form" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
                             <div id="file-upload-area" class="file-upload-area">
-                                <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
-                                <h4>将文件拖放到此处</h4>
-                                <p class="text-muted">或点击下方按钮选择文件</p>
+                                <div class="upload-text">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                    <h4>将文件拖放到此处</h4>
+                                    <p class="text-muted">或点击下方按钮选择文件</p>
+                                </div>
                                 
                                 <input type="file" id="file-input" name="file" accept=".csv,.json,.jsonl,.parquet,.pq" style="display: none;">
                                 
@@ -68,6 +70,25 @@
                                         支持格式: CSV, JSON, JSONL, Parquet<br>
                                         最大文件大小: 500MB
                                     </small>
+                                </div>
+                                
+                                <div class="upload-format-icons d-flex justify-content-center mt-4">
+                                    <div class="mx-3 text-center">
+                                        <i class="fas fa-file-csv fa-2x text-success"></i>
+                                        <small class="d-block mt-1">CSV</small>
+                                    </div>
+                                    <div class="mx-3 text-center">
+                                        <i class="fas fa-file-code fa-2x text-primary"></i>
+                                        <small class="d-block mt-1">JSON</small>
+                                    </div>
+                                    <div class="mx-3 text-center">
+                                        <i class="fas fa-file-alt fa-2x text-info"></i>
+                                        <small class="d-block mt-1">JSONL</small>
+                                    </div>
+                                    <div class="mx-3 text-center">
+                                        <i class="fas fa-file fa-2x text-warning"></i>
+                                        <small class="d-block mt-1">Parquet</small>
+                                    </div>
                                 </div>
                             </div>
                         </form>

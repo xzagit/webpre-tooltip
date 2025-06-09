@@ -16,8 +16,10 @@
                     <div class="card-body p-3">
                         <div class="file-info-item">
                             <i class="fas fa-file-alt text-primary me-2"></i>
-                            <strong>文件:</strong> 
-                            <span class="text-truncate" title="{{ current_data.filename }}">{{ current_data.filename }}</span>
+                            <strong>文件:</strong>
+                            <div class="file-name-wrapper" title="{{ current_data.filename }}">
+                                {{ current_data.filename }}
+                            </div>
                         </div>
                         <div class="file-info-item">
                             <i class="fas fa-list-ol text-success me-2"></i>
@@ -38,109 +40,49 @@
                 <h6 class="sidebar-section-title">
                     <i class="fas fa-columns me-2 text-primary"></i>列管理
                 </h6>
-                <div class="card column-management-card border-0 shadow-sm">
+                <div class="card simple-column-management-card border-0 shadow-sm">
                     <div class="card-header bg-gradient-primary text-white border-0">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-bold small">
-                                <i class="fas fa-list me-1"></i>共 {{ data.columns|length }} 列
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold">
+                                <i class="fas fa-list me-1"></i>显示/隐藏列
                             </span>
-                            <button id="toggleColumnsBtn" class="btn btn-sm btn-outline-light border-0" title="展开/折叠列列表">
-                                <i class="fas fa-chevron-down transition-transform"></i>
-                                <span class="ms-1 d-none d-md-inline">展开</span>
+                            <button id="showAllColumnsBtn" class="btn btn-sm btn-outline-light" title="显示所有列">
+                                <i class="fas fa-eye me-1"></i>全部显示
                             </button>
-                        </div>
-                        
-                        <!-- 列状态统计 -->
-                        <div class="column-stats-container">
-                            <div class="row g-2 text-center">
-                                <div class="col-4">
-                                    <div class="stat-item">
-                                        <div class="stat-number" id="visibleColumnsCount">{{ data.columns|length }}</div>
-                                        <div class="stat-label">
-                                            <i class="fas fa-eye stat-icon"></i>
-                                            <span>显示</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="stat-item">
-                                        <div class="stat-number" id="hiddenColumnsCount">0</div>
-                                        <div class="stat-label">
-                                            <i class="fas fa-eye-slash stat-icon"></i>
-                                            <span>隐藏</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-4">
-                                    <div class="stat-item">
-                                        <div class="stat-number">{{ data.columns|length }}</div>
-                                        <div class="stat-label">
-                                            <i class="fas fa-list-ul stat-icon"></i>
-                                            <span>总计</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- 快捷操作按钮 -->
-                        <div class="quick-actions-container mt-3">
-                            <div class="row g-1">
-                                <div class="col-6">
-                                    <button id="showAllColumnsBtn" class="btn btn-sm btn-outline-light w-100 quick-action-btn" title="显示所有列">
-                                        <i class="fas fa-eye me-1"></i>
-                                        <span class="small">全部显示</span>
-                                    </button>
-                                </div>
-                                <div class="col-6">
-                                    <button id="hideAllColumnsBtn" class="btn btn-sm btn-outline-light w-100 quick-action-btn" title="隐藏所有列（保留第一列）">
-                                        <i class="fas fa-eye-slash me-1"></i>
-                                        <span class="small">全部隐藏</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- 列搜索框 -->
-                        <div class="column-search-container mt-3">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-transparent border-0 text-white-50">
-                                    <i class="fas fa-search"></i>
-                                </span>
-                                <input type="text" 
-                                       id="columnSearchInput" 
-                                       class="form-control bg-transparent border-0 text-white column-search-input" 
-                                       placeholder="搜索列名..."
-                                       autocomplete="off">
-                                <button class="btn btn-outline-light btn-sm border-0" 
-                                        id="clearColumnSearch" 
-                                        type="button" 
-                                        title="清空搜索">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
                         </div>
                     </div>
                     
                     <div class="card-body p-0">
-                        <div id="columnsList" class="columns-list collapsed">
+                        <div class="d-flex justify-content-between column-stats p-2">
+                            <div>
+                                <span class="badge bg-success me-1">
+                                    <i class="fas fa-eye"></i>
+                                    <span id="visibleColumnsCount">{{ data.columns|length }}</span>
+                                </span>
+                                <small>显示</small>
+                            </div>
+                            <div>
+                                <span class="badge bg-secondary me-1">
+                                    <i class="fas fa-eye-slash"></i>
+                                    <span id="hiddenColumnsCount">0</span>
+                                </span>
+                                <small>隐藏</small>
+                            </div>
+                        </div>
+
+                        <div id="columnsList" class="columns-list simplified-list">
                             {% for col in data.columns %}
-                                <div class="column-item modern-column-item {% if loop.index > 5 %}column-item-hidden{% endif %}" 
-                                     data-column-index="{{ loop.index0 }}">
+                                <div class="column-item simplified-column-item" data-column-index="{{ loop.index0 }}">
                                     <div class="d-flex align-items-center p-2">
-                                        <button class="column-visibility-btn modern-visibility-btn me-3" 
+                                        <button class="column-visibility-btn simplified-visibility-btn me-2" 
                                                 data-column="{{ col }}" 
                                                 data-column-index="{{ loop.index0 }}"
-                                                title="点击切换列显示状态"
-                                                data-bs-toggle="tooltip" 
-                                                data-bs-placement="left">
+                                                title="点击切换列显示状态">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <div class="column-info flex-grow-1">
-                                            <div class="column-name-wrapper">
-                                                <span class="column-name-text" title="{{ col }}" data-bs-toggle="tooltip" data-bs-placement="top">{{ col }}</span>
-                                                <span class="column-index-badge">{{ loop.index }}</span>
-                                            </div>
+                                        <div class="column-name-wrapper text-truncate" title="{{ col }}">
+                                            <span class="column-index-badge me-1">{{ loop.index }}</span>
+                                            {{ col }}
                                         </div>
                                     </div>
                                 </div>
@@ -418,13 +360,20 @@ function loadColumnVisibilityState() {
             // 应用保存的状态
             hiddenColumns.forEach(columnIndex => {
                 hideColumn(columnIndex);
-                const columnName = document.querySelector(`th[data-column-index="${columnIndex}"]`)?.getAttribute('data-column');
-                if (columnName) {
-                    updateVisibilityButton(columnName, true);
+                const button = document.querySelector(`button[data-column-index="${columnIndex}"]`);
+                if (button) {
+                    const icon = button.querySelector('i');
+                    if (icon) {
+                        icon.className = 'fas fa-eye-slash';
+                    }
+                    button.classList.add('column-hidden');
                 }
             });
+            
+            // 更新显示/隐藏列的计数
+            updateColumnStats();
         } catch (e) {
-            console.warn('Failed to load column visibility state:', e);
+            console.warn('加载列状态失败:', e);
             sessionStorage.removeItem('hiddenColumns');
         }
     }
@@ -435,7 +384,8 @@ function saveColumnVisibilityState() {
     sessionStorage.setItem('hiddenColumns', JSON.stringify([...hiddenColumns]));
 }
 
-function toggleColumnVisibility(columnName, columnIndex) {
+// 切换列可见性
+function toggleColumnVisibility(columnIndex) {
     const isHidden = hiddenColumns.has(columnIndex);
     
     if (isHidden) {
@@ -449,12 +399,23 @@ function toggleColumnVisibility(columnName, columnIndex) {
     }
     
     // 更新按钮状态
-    updateVisibilityButton(columnName, !isHidden);
+    const button = document.querySelector(`button[data-column-index="${columnIndex}"]`);
+    if (button) {
+        const icon = button.querySelector('i');
+        if (icon) {
+            icon.className = isHidden ? 'fas fa-eye' : 'fas fa-eye-slash';
+        }
+        button.classList.toggle('column-hidden', !isHidden);
+    }
+    
+    // 更新显示/隐藏列的计数
+    updateColumnStats();
     
     // 保存状态
     saveColumnVisibilityState();
 }
 
+// 隐藏列
 function hideColumn(columnIndex) {
     // 隐藏表头
     const headerCell = document.querySelector(`th[data-column-index="${columnIndex}"]`);
@@ -469,6 +430,7 @@ function hideColumn(columnIndex) {
     });
 }
 
+// 显示列
 function showColumn(columnIndex) {
     // 显示表头
     const headerCell = document.querySelector(`th[data-column-index="${columnIndex}"]`);
@@ -483,26 +445,47 @@ function showColumn(columnIndex) {
     });
 }
 
-function updateVisibilityButton(columnName, isHidden) {
-    const button = document.querySelector(`button[data-column="${columnName}"]`);
-    if (button) {
-        const icon = button.querySelector('i');
-        if (isHidden) {
-            icon.className = 'fas fa-eye-slash';
-            button.classList.add('column-hidden');
-            button.setAttribute('title', '点击显示此列');
-        } else {
-            icon.className = 'fas fa-eye';
-            button.classList.remove('column-hidden');
-            button.setAttribute('title', '点击隐藏此列');
-        }
+// 显示所有列
+function showAllColumns() {
+    // 显示所有被隐藏的列
+    hiddenColumns.forEach(columnIndex => {
+        showColumn(columnIndex);
         
-        // 更新tooltip
-        const tooltipInstance = bootstrap.Tooltip.getInstance(button);
-        if (tooltipInstance) {
-            tooltipInstance.dispose();
-            new bootstrap.Tooltip(button);
+        // 更新对应按钮状态
+        const button = document.querySelector(`button[data-column-index="${columnIndex}"]`);
+        if (button) {
+            const icon = button.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-eye';
+            }
+            button.classList.remove('column-hidden');
         }
+    });
+    
+    // 清空隐藏列集合
+    hiddenColumns.clear();
+    
+    // 更新显示/隐藏列的计数
+    updateColumnStats();
+    
+    // 保存状态
+    saveColumnVisibilityState();
+}
+
+// 更新列统计信息
+function updateColumnStats() {
+    const visibleCount = document.querySelectorAll('th[data-column-index]').length - hiddenColumns.size;
+    const hiddenCount = hiddenColumns.size;
+    
+    const visibleElement = document.getElementById('visibleColumnsCount');
+    const hiddenElement = document.getElementById('hiddenColumnsCount');
+    
+    if (visibleElement) {
+        visibleElement.textContent = visibleCount;
+    }
+    
+    if (hiddenElement) {
+        hiddenElement.textContent = hiddenCount;
     }
 }
 
@@ -520,18 +503,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // 加载列可见性状态
     loadColumnVisibilityState();
     
-    // 行悬停效果
-    const rows = document.querySelectorAll('.clickable-row');
-    rows.forEach(row => {
-        row.addEventListener('mouseenter', function() {
-            this.style.backgroundColor = '#e3f2fd';
-        });
-        
-        row.addEventListener('mouseleave', function() {
-            this.style.backgroundColor = '';
-        });
-    });
-    
     // 列显示/隐藏按钮事件
     const visibilityButtons = document.querySelectorAll('.column-visibility-btn');
     visibilityButtons.forEach(button => {
@@ -539,56 +510,22 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             e.stopPropagation();
             
-            const columnName = this.getAttribute('data-column');
             const columnIndex = parseInt(this.getAttribute('data-column-index'));
-            
-            toggleColumnVisibility(columnName, columnIndex);
+            toggleColumnVisibility(columnIndex);
         });
     });
     
-    // 列搜索功能
-    const columnSearchInput = document.getElementById('columnSearchInput');
-    const clearColumnSearch = document.getElementById('clearColumnSearch');
-    
-    if (columnSearchInput) {
-        columnSearchInput.addEventListener('input', function() {
-            const searchTerm = this.value.trim().toLowerCase();
-            const columnItems = document.querySelectorAll('.column-item');
-            
-            columnItems.forEach(item => {
-                const columnName = item.getAttribute('data-column');
-                if (columnName && columnName.toLowerCase().includes(searchTerm)) {
-                    item.style.display = '';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        });
-    }
-    
-    if (clearColumnSearch) {
-        clearColumnSearch.addEventListener('click', function() {
-            columnSearchInput.value = '';
-            const columnItems = document.querySelectorAll('.column-item');
-            columnItems.forEach(item => {
-                item.style.display = '';
-            });
-        });
+    // 全部显示按钮事件
+    const showAllBtn = document.getElementById('showAllColumnsBtn');
+    if (showAllBtn) {
+        showAllBtn.addEventListener('click', showAllColumns);
     }
 });
 
-// 监听页面卸载事件
-window.addEventListener('beforeunload', function() {
-    // 保存当前状态（防止意外关闭）
-    saveColumnVisibilityState();
-});
-
-// 监听页面隐藏事件（用户切换标签页等）
+// 监听页面卸载和隐藏事件
+window.addEventListener('beforeunload', saveColumnVisibilityState);
 document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        // 页面变为不可见时保存状态
-        saveColumnVisibilityState();
-    }
+    if (document.hidden) saveColumnVisibilityState();
 });
 </script>
 {% endblock %}
